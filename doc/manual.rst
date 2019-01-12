@@ -55,7 +55,7 @@ Full public and private HTTP REST APIs for all exchanges are implemented. WebSoc
 Exchanges
 =========
 
-The ccxt library currently supports the following 132 cryptocurrency exchange markets and trading APIs:
+The ccxt library currently supports the following 133 cryptocurrency exchange markets and trading APIs:
 
 +----------------------+--------------------+-----------------------------------------------------------------------------------------+----------------------------------------------------------------------+-------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
 |                      | id                 | name                                                                                    | certified                                                            | ver   | doc                                                                                                 | countries                                |
@@ -64,7 +64,7 @@ The ccxt library currently supports the following 132 cryptocurrency exchange ma
 +----------------------+--------------------+-----------------------------------------------------------------------------------------+----------------------------------------------------------------------+-------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
 | |acx|                | acx                | `ACX <https://acx.io>`__                                                                |                                                                      | 2     | `API <https://acx.io/documents/api_v2>`__                                                           | Australia                                |
 +----------------------+--------------------+-----------------------------------------------------------------------------------------+----------------------------------------------------------------------+-------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
-| |allcoin|            | allcoin            | `Allcoin <https://www.allcoin.com>`__                                                   |                                                                      | 1     | `API <https://www.allcoin.com/About/APIReference>`__                                                | Canada                                   |
+| |allcoin|            | allcoin            | `Allcoin <https://www.allcoin.com>`__                                                   |                                                                      | 1     | `API <https://www.allcoin.com/api_market/market>`__                                                 | Canada                                   |
 +----------------------+--------------------+-----------------------------------------------------------------------------------------+----------------------------------------------------------------------+-------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
 | |anxpro|             | anxpro             | `ANXPro <https://anxpro.com>`__                                                         |                                                                      | 2     | `API <http://docs.anxv2.apiary.io>`__                                                               | Japan, Singapore, Hong Kong, New Zealand |
 +----------------------+--------------------+-----------------------------------------------------------------------------------------+----------------------------------------------------------------------+-------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
@@ -185,6 +185,8 @@ The ccxt library currently supports the following 132 cryptocurrency exchange ma
 | |cointiger|          | cointiger          | `CoinTiger <https://www.cointiger.pro/exchange/register.html?refCode=FfvDtt>`__         |                                                                      | 1     | `API <https://github.com/cointiger/api-docs-en/wiki>`__                                             | China                                    |
 +----------------------+--------------------+-----------------------------------------------------------------------------------------+----------------------------------------------------------------------+-------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
 | |coolcoin|           | coolcoin           | `CoolCoin <https://www.coolcoin.com>`__                                                 |                                                                      | \*    | `API <https://www.coolcoin.com/help.api.html>`__                                                    | Hong Kong                                |
++----------------------+--------------------+-----------------------------------------------------------------------------------------+----------------------------------------------------------------------+-------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
+| |coss|               | coss               | `COSS <https://www.coss.io/c/reg?r=OWCMHQVW2Q>`__                                       | `CCXT Certified <https://github.com/ccxt/ccxt/wiki/Certification>`__ | 1     | `API <https://api.coss.io/v1/spec>`__                                                               | Singapore, Netherlands                   |
 +----------------------+--------------------+-----------------------------------------------------------------------------------------+----------------------------------------------------------------------+-------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
 | |crex24|             | crex24             | `CREX24 <https://crex24.com/?refid=slxsjsjtil8xexl9hksr>`__                             |                                                                      | 2     | `API <https://docs.crex24.com/trade-api/v2>`__                                                      | Estonia                                  |
 +----------------------+--------------------+-----------------------------------------------------------------------------------------+----------------------------------------------------------------------+-------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
@@ -312,7 +314,7 @@ The ccxt library currently supports the following 132 cryptocurrency exchange ma
 +----------------------+--------------------+-----------------------------------------------------------------------------------------+----------------------------------------------------------------------+-------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
 | |virwox|             | virwox             | `VirWoX <https://www.virwox.com>`__                                                     |                                                                      | \*    | `API <https://www.virwox.com/developers.php>`__                                                     | Austria, EU                              |
 +----------------------+--------------------+-----------------------------------------------------------------------------------------+----------------------------------------------------------------------+-------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
-| |wex|                | wex                | `WEX <https://wex.link>`__                                                              |                                                                      | 3     | `API <https://wex.link/api/3/docs>`__                                                               | New Zealand                              |
+| |wex|                | wex                | `WEX <https://wex1.in>`__                                                               |                                                                      | 3     | `API <https://wex1.in/api/3/docs>`__                                                                | New Zealand                              |
 +----------------------+--------------------+-----------------------------------------------------------------------------------------+----------------------------------------------------------------------+-------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
 | |xbtce|              | xbtce              | `xBTCe <https://www.xbtce.com>`__                                                       |                                                                      | 1     | `API <https://www.xbtce.com/tradeapi>`__                                                            | Russia                                   |
 +----------------------+--------------------+-----------------------------------------------------------------------------------------+----------------------------------------------------------------------+-------+-----------------------------------------------------------------------------------------------------+------------------------------------------+
@@ -700,9 +702,9 @@ Market Structure
        'quote':  'USD',      // uppercase string, quote currency, 3 or more letters
        'active': true,       // boolean, market status
        'precision': {        // number of decimal digits "after the dot"
-           'price': 8,       // integer
-           'amount': 8,      // integer
-           'cost': 8,        // integer
+           'price': 8,       // integer, might be missing if not supplied by the exchange
+           'amount': 8,      // integer, might be missing if not supplied by the exchange
+           'cost': 8,        // integer, very few exchanges actually have it
        },
        'limits': {           // value limits when placing orders on this market
            'amount': {
@@ -932,7 +934,9 @@ Historically various symbolic names have been used to designate same trading pai
 
 -  ``XBT → BTC``: ``XBT`` is newer but ``BTC`` is more common among exchanges and sounds more like bitcoin (`read more <https://www.google.ru/search?q=xbt+vs+btc>`__).
 -  ``BCC → BCH``: The Bitcoin Cash fork is often called with two different symbolic names: ``BCC`` and ``BCH``. The name ``BCC`` is ambiguous for Bitcoin Cash, it is confused with BitConnect. The ccxt library will convert ``BCC`` to ``BCH`` where it is appropriate (some exchanges and aggregators confuse them).
--  ``DRK → DASH``: ``DASH`` was Darkcoin then became Dash (`read more <https://minergate.com/blog/dashcoin-and-dash/>`__). **UPD. On November 15 2018 Bitcoin Cash forked the second time, so, now there is ``BCHABC`` and ``BCHSV``.**
+-  ``DRK → DASH``: ``DASH`` was Darkcoin then became Dash (`read more <https://minergate.com/blog/dashcoin-and-dash/>`__).
+-  ``BCHABC → BCH``: On November 15 2018 Bitcoin Cash forked the second time, so, now there is ``BCH`` (for BCH ABC) and ``BSV`` (for BCH SV).
+-  ``BCHSV → BSV``: This is a common substitution mapping for the Bitcoin Cash SV fork (some exchanges call it ``BSV``, others call it ``BCHSV``, we use the former).
 -  ``DSH → DASH``: Try not to confuse symbols and currencies. The ``DSH`` (Dashcoin) is not the same as ``DASH`` (Dash). Some exchanges have ``DASH`` labelled inconsistently as ``DSH``, the ccxt library does a correction for that as well (``DSH → DASH``), but only on certain exchanges that have these two currencies confused, whereas most exchanges have them both correct. Just remember that ``DASH/BTC`` is not the same as ``DSH/BTC``.
 -  ``XRB`` → ``NANO``: ``NANO`` is the newer code for RaiBlocks, thus, CCXT unified API uses will replace the older ``XRB`` with ``NANO`` where needed. https://hackernoon.com/nano-rebrand-announcement-9101528a7b76
 -  ``USD`` → ``USDT``: Some exchanges, like Bitfinex, HitBTC and a few other name the currency as ``USD`` in their listings, but those markets are actually trading ``USDT``. The confusion can come from a 3-letter limitation on symbol names or may be due to other reasons. In cases where the traded currency is actually ``USDT`` and is not ``USD`` – the CCXT library will perform ``USD`` → \ ``USDT`` conversion. Note, however, that some exchanges have both ``USD`` and ``USDT`` symbols, for example, Kraken has a ``USDT/USD`` trading pair.
@@ -1544,6 +1548,9 @@ The method for fetching an order book for a particular symbol is named ``fetchOr
        var_dump ($exchange->fetch_order_book ($symbol));
        usleep ($delay); // rate limit
    }
+
+Order Book Structure
+~~~~~~~~~~~~~~~~~~~~
 
 The structure of a returned order book is as follows:
 
@@ -2882,6 +2889,8 @@ Deposits
 
    if (exchange.has['fetchDeposits']) {
        const deposits = await exchange.fetchDeposits (code, since, limit, params)
+   } else {
+       throw new Error (exchange.id + ' does not have the fetchDeposits method')
    }
 
 .. code:: python
@@ -2889,9 +2898,10 @@ Deposits
    # Python
    # fetch_deposits(code = None, since = None, limit = None, params = {})
 
-   if (exchange.has['fetchDeposits']) {
+   if exchange.has['fetchDeposits']:
        deposits = exchange.fetch_deposits(code, since, limit, params)
-   }
+   else:
+       raise Exception (exchange.id + ' does not have the fetch_deposits method')
 
 .. code:: php
 
@@ -2900,6 +2910,8 @@ Deposits
 
    if ($exchange->has['fetchDeposits']) {
        $deposits = $exchange->fetch_deposits ($code, $since, $limit, $params);
+   } else {
+       throw new Exception ($exchange->id . ' does not have the fetch_deposits method');
    }
 
 Withdrawals
@@ -2912,6 +2924,8 @@ Withdrawals
 
    if (exchange.has['fetchWithdrawals']) {
        const withdrawals = await exchange.fetchWithdrawals (code, since, limit, params)
+   } else {
+       throw new Error (exchange.id + ' does not have the fetchWithdrawals method')
    }
 
 .. code:: python
@@ -2919,9 +2933,10 @@ Withdrawals
    # Python
    # fetch_withdrawals(code = None, since = None, limit = None, params = {})
 
-   if (exchange.has['fetchWithdrawals']) {
+   if exchange.has['fetchWithdrawals']:
        withdrawals = exchange.fetch_withdrawals(code, since, limit, params)
-   }
+   else:
+       raise Exception (exchange.id + ' does not have the fetch_withdrawals method')
 
 .. code:: php
 
@@ -2930,6 +2945,8 @@ Withdrawals
 
    if ($exchange->has['fetchWithdrawals']) {
        $withdrawals = $exchange->fetch_withdrawals ($code, $since, $limit, $params);
+   } else {
+       throw new Exception ($exchange->id . ' does not have the fetch_withdrawals method');
    }
 
 All Transactions
@@ -2942,6 +2959,8 @@ All Transactions
 
    if (exchange.has['fetchTransactions']) {
        const transactions = await exchange.fetchTransactions (code, since, limit, params)
+   } else {
+       throw new Error (exchange.id + ' does not have the fetchTransactions method')
    }
 
 .. code:: python
@@ -2949,9 +2968,10 @@ All Transactions
    # Python
    # fetch_transactions(code = None, since = None, limit = None, params = {})
 
-   if (exchange.has['fetchTransactions']) {
+   if exchange.has['fetchTransactions']:
        transactions = exchange.fetch_transactions(code, since, limit, params)
-   }
+   else:
+       raise Exception (exchange.id + ' does not have the fetch_transactions method')
 
 .. code:: php
 
@@ -2960,6 +2980,8 @@ All Transactions
 
    if ($exchange->has['fetchTransactions']) {
        $transactions = $exchange->fetch_transactions ($code, $since, $limit, $params);
+   } else {
+       throw new Exception ($exchange->id . ' does not have the fetch_transactions method');
    }
 
 Fees
@@ -3398,6 +3420,7 @@ Notes
 .. |coinspot| image:: https://user-images.githubusercontent.com/1294454/28208429-3cacdf9a-6896-11e7-854e-4c79a772a30f.jpg
 .. |cointiger| image:: https://user-images.githubusercontent.com/1294454/39797261-d58df196-5363-11e8-9880-2ec78ec5bd25.jpg
 .. |coolcoin| image:: https://user-images.githubusercontent.com/1294454/36770529-be7b1a04-1c5b-11e8-9600-d11f1996b539.jpg
+.. |coss| image:: https://user-images.githubusercontent.com/1294454/50328158-22e53c00-0503-11e9-825c-c5cfd79bfa74.jpg
 .. |crex24| image:: https://user-images.githubusercontent.com/1294454/47813922-6f12cc00-dd5d-11e8-97c6-70f957712d47.jpg
 .. |crypton| image:: https://user-images.githubusercontent.com/1294454/41334251-905b5a78-6eed-11e8-91b9-f3aa435078a1.jpg
 .. |cryptopia| image:: https://user-images.githubusercontent.com/1294454/29484394-7b4ea6e2-84c6-11e7-83e5-1fccf4b2dc81.jpg

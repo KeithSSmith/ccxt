@@ -806,8 +806,14 @@ class cryptopia extends Exchange {
         ), $params));
         $address = $this->safe_string($response['Data'], 'BaseAddress');
         $tag = $this->safe_string($response['Data'], 'Address');
+        if ($address !== null) {
+            if (strlen ($address) < 1) {
+                $address = null;
+            }
+        }
         if ($address === null) {
             $address = $tag;
+            $tag = null;
         }
         $this->check_address($address);
         return array (
@@ -866,57 +872,36 @@ class cryptopia extends Exchange {
         return $this->milliseconds ();
     }
 
-    public function handle_errors ($code, $reason, $url, $method, $headers, $body, $response = null) {
-        if (gettype ($body) !== 'string')
+    public function handle_errors ($code, $reason, $url, $method, $headers, $body, $response) {
+        if ($response === null) {
             return; // fallback to default $error handler
-        if (strlen ($body) < 2)
-            return; // fallback to default $error handler
-        $fixedJSONString = $this->sanitize_broken_json_string ($body);
-        if ($fixedJSONString[0] === '{') {
-            $response = json_decode ($fixedJSONString, $as_associative_array = true);
-            if (is_array ($response) && array_key_exists ('Success', $response)) {
-                $success = $this->safe_value($response, 'Success');
-                if ($success !== null) {
-                    if (!$success) {
-                        $error = $this->safe_string($response, 'Error');
-                        $feedback = $this->id;
-                        if (gettype ($error) === 'string') {
-                            $feedback = $feedback . ' ' . $error;
-                            if (mb_strpos ($error, 'Invalid trade amount') !== false) {
-                                throw new InvalidOrder ($feedback);
-                            }
-                            if (mb_strpos ($error, 'No matching trades found') !== false) {
-                                throw new OrderNotFound ($feedback);
-                            }
-                            if (mb_strpos ($error, 'does not exist') !== false) {
-                                throw new OrderNotFound ($feedback);
-                            }
-                            if (mb_strpos ($error, 'Insufficient Funds') !== false) {
-                                throw new InsufficientFunds ($feedback);
-                            }
-                            if (mb_strpos ($error, 'Nonce has already been used') !== false) {
-                                throw new InvalidNonce ($feedback);
-                            }
-                        } else {
-                            $feedback = $feedback . ' ' . $fixedJSONString;
+        }
+        if (is_array ($response) && array_key_exists ('Success', $response)) {
+            $success = $this->safe_value($response, 'Success');
+            if ($success !== null) {
+                if (!$success) {
+                    $error = $this->safe_string($response, 'Error');
+                    $feedback = $this->id . ' ' . $body;
+                    if (gettype ($error) === 'string') {
+                        if (mb_strpos ($error, 'Invalid trade amount') !== false) {
+                            throw new InvalidOrder ($feedback);
                         }
-                        throw new ExchangeError ($feedback);
+                        if (mb_strpos ($error, 'No matching trades found') !== false) {
+                            throw new OrderNotFound ($feedback);
+                        }
+                        if (mb_strpos ($error, 'does not exist') !== false) {
+                            throw new OrderNotFound ($feedback);
+                        }
+                        if (mb_strpos ($error, 'Insufficient Funds') !== false) {
+                            throw new InsufficientFunds ($feedback);
+                        }
+                        if (mb_strpos ($error, 'Nonce has already been used') !== false) {
+                            throw new InvalidNonce ($feedback);
+                        }
                     }
+                    throw new ExchangeError ($feedback);
                 }
             }
         }
-    }
-
-    public function sanitize_broken_json_string ($jsonString) {
-        // sometimes cryptopia will return a unicode symbol before actual JSON string.
-        $indexOfBracket = mb_strpos ($jsonString, '{');
-        if ($indexOfBracket >= 0) {
-            return mb_substr ($jsonString, $indexOfBracket);
-        }
-        return $jsonString;
-    }
-
-    public function parse_json ($response, $responseBody, $url, $method) {
-        return parent::parseJson ($response, $this->sanitize_broken_json_string ($responseBody), $url, $method);
     }
 }

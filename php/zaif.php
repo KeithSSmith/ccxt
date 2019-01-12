@@ -223,6 +223,8 @@ class zaif extends Exchange {
         $timestamp = $trade['date'] * 1000;
         $id = $this->safe_string($trade, 'id');
         $id = $this->safe_string($trade, 'tid', $id);
+        $price = $this->safe_float($trade, 'price');
+        $amount = $this->safe_float($trade, 'amount');
         if (!$market)
             $market = $this->markets_by_id[$trade['currency_pair']];
         return array (
@@ -233,8 +235,8 @@ class zaif extends Exchange {
             'symbol' => $market['symbol'],
             'type' => null,
             'side' => $side,
-            'price' => $trade['price'],
-            'amount' => $trade['amount'],
+            'price' => $price,
+            'amount' => $amount,
         );
     }
 
@@ -409,10 +411,10 @@ class zaif extends Exchange {
         return array ( 'url' => $url, 'method' => $method, 'body' => $body, 'headers' => $headers );
     }
 
-    public function handle_errors ($httpCode, $reason, $url, $method, $headers, $body, $response = null) {
-        if (!$this->is_json_encoded_object($body))
-            return; // fallback to default $error handler
-        $response = json_decode ($body, $as_associative_array = true);
+    public function handle_errors ($httpCode, $reason, $url, $method, $headers, $body, $response) {
+        if ($response === null) {
+            return;
+        }
         //
         //     array ("$error" => "unsupported currency_pair")
         //

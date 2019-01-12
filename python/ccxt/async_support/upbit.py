@@ -5,7 +5,6 @@
 
 from ccxt.async_support.base.exchange import Exchange
 import math
-import json
 from ccxt.base.errors import ExchangeError
 from ccxt.base.errors import AuthenticationError
 from ccxt.base.errors import PermissionDenied
@@ -487,7 +486,7 @@ class upbit (Exchange):
             timestamp = self.safe_integer(orderbook, 'timestamp')
             result[symbol] = {
                 'bids': self.parse_bids_asks(orderbook['orderbook_units'], 'bid_price', 'bid_size'),
-                'asks': self.parse_bids_asks(orderbook['orderbook_units'], 'ask_price', 'bid_size'),
+                'asks': self.parse_bids_asks(orderbook['orderbook_units'], 'ask_price', 'ask_size'),
                 'timestamp': timestamp,
                 'datetime': self.iso8601(timestamp),
                 'nonce': None,
@@ -551,8 +550,8 @@ class upbit (Exchange):
             'change': change,
             'percentage': percentage,
             'average': None,
-            'baseVolume': self.safe_float(ticker, 'acc_trade_price_24h'),
-            'quoteVolume': self.safe_float(ticker, 'acc_trade_volume_24h'),
+            'baseVolume': self.safe_float(ticker, 'acc_trade_volume_24h'),
+            'quoteVolume': self.safe_float(ticker, 'acc_trade_price_24h'),
             'info': ticker,
         }
 
@@ -744,12 +743,12 @@ class upbit (Exchange):
         #                            unit:  1                     },
         #
         return [
-            self.safe_integer(ohlcv, 'timestamp'),
+            self.parse8601(self.safe_string(ohlcv, 'candle_date_time_utc')),
             self.safe_float(ohlcv, 'opening_price'),
             self.safe_float(ohlcv, 'high_price'),
             self.safe_float(ohlcv, 'low_price'),
             self.safe_float(ohlcv, 'trade_price'),
-            self.safe_float(ohlcv, 'candle_acc_trade_price'),  # base volume
+            self.safe_float(ohlcv, 'candle_acc_trade_volume'),  # base volume
         ]
 
     async def fetch_ohlcv(self, symbol, timeframe='1m', since=None, limit=None, params={}):
@@ -1150,7 +1149,7 @@ class upbit (Exchange):
         }
         market = None
         if symbol is not None:
-            market = self.market_id(symbol)
+            market = self.market(symbol)
             request['market'] = market['id']
         response = await self.privateGetOrders(self.extend(request, params))
         #
@@ -1391,10 +1390,9 @@ class upbit (Exchange):
                 headers['Content-Type'] = 'application/json'
         return {'url': url, 'method': method, 'body': body, 'headers': headers}
 
-    def handle_errors(self, httpCode, reason, url, method, headers, body, response=None):
-        if not self.is_json_encoded_object(body):
+    def handle_errors(self, httpCode, reason, url, method, headers, body, response):
+        if response is None:
             return  # fallback to default error handler
-        response = json.loads(body)
         #
         #   {'error': {'message': "Missing request parameter error. Check the required parametersnot ", 'name':  400} },
         #   {'error': {'message': "side is missing, side does not have a valid value", 'name': "validation_error"} },

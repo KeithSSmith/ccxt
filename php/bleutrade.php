@@ -119,56 +119,6 @@ class bleutrade extends bittrex {
         ));
     }
 
-    public function fetch_markets ($params = array ()) {
-        $markets = $this->publicGetMarkets ();
-        $result = array ();
-        for ($p = 0; $p < count ($markets['result']); $p++) {
-            $market = $markets['result'][$p];
-            $id = $market['MarketName'];
-            $baseId = $market['MarketCurrency'];
-            $quoteId = $market['BaseCurrency'];
-            $base = $this->common_currency_code($baseId);
-            $quote = $this->common_currency_code($quoteId);
-            $symbol = $base . '/' . $quote;
-            $precision = array (
-                'amount' => 8,
-                'price' => 8,
-            );
-            $active = $this->safe_string($market, 'IsActive');
-            if ($active === 'true') {
-                $active = true;
-            } else if ($active === 'false') {
-                $active = false;
-            }
-            $result[] = array (
-                'id' => $id,
-                'symbol' => $symbol,
-                'base' => $base,
-                'quote' => $quote,
-                'baseId' => $baseId,
-                'quoteId' => $quoteId,
-                'active' => $active,
-                'info' => $market,
-                'precision' => $precision,
-                'limits' => array (
-                    'amount' => array (
-                        'min' => $market['MinTradeSize'],
-                        'max' => null,
-                    ),
-                    'price' => array (
-                        'min' => null,
-                        'max' => null,
-                    ),
-                    'cost' => array (
-                        'min' => 0,
-                        'max' => null,
-                    ),
-                ),
-            );
-        }
-        return $result;
-    }
-
     public function parse_order_status ($status) {
         $statuses = array (
             'OK' => 'closed',
@@ -262,6 +212,41 @@ class bleutrade extends bittrex {
 
     public function fetch_withdrawals ($code = null, $since = null, $limit = null, $params = array ()) {
         return $this->fetch_transactions_by_type ('withdrawal', $code, $since, $limit, $params);
+    }
+
+    public function parse_trade ($trade, $market = null) {
+        $timestamp = $this->parse8601 ($trade['TimeStamp'] . '+00:00');
+        $side = null;
+        if ($trade['OrderType'] === 'BUY') {
+            $side = 'buy';
+        } else if ($trade['OrderType'] === 'SELL') {
+            $side = 'sell';
+        }
+        $id = $this->safe_string($trade, 'TradeID');
+        $symbol = null;
+        if ($market !== null)
+            $symbol = $market['symbol'];
+        $cost = null;
+        $price = $this->safe_float($trade, 'Price');
+        $amount = $this->safe_float($trade, 'Quantity');
+        if ($amount !== null) {
+            if ($price !== null) {
+                $cost = $price * $amount;
+            }
+        }
+        return array (
+            'id' => $id,
+            'info' => $trade,
+            'timestamp' => $timestamp,
+            'datetime' => $this->iso8601 ($timestamp),
+            'symbol' => $symbol,
+            'type' => 'limit',
+            'side' => $side,
+            'price' => $price,
+            'amount' => $amount,
+            'cost' => $cost,
+            'fee' => null,
+        );
     }
 
     public function parse_transaction ($transaction, $currency = null) {

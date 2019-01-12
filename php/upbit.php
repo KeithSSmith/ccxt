@@ -495,7 +495,7 @@ class upbit extends Exchange {
             $timestamp = $this->safe_integer($orderbook, 'timestamp');
             $result[$symbol] = array (
                 'bids' => $this->parse_bids_asks($orderbook['orderbook_units'], 'bid_price', 'bid_size'),
-                'asks' => $this->parse_bids_asks($orderbook['orderbook_units'], 'ask_price', 'bid_size'),
+                'asks' => $this->parse_bids_asks($orderbook['orderbook_units'], 'ask_price', 'ask_size'),
                 'timestamp' => $timestamp,
                 'datetime' => $this->iso8601 ($timestamp),
                 'nonce' => null,
@@ -562,8 +562,8 @@ class upbit extends Exchange {
             'change' => $change,
             'percentage' => $percentage,
             'average' => null,
-            'baseVolume' => $this->safe_float($ticker, 'acc_trade_price_24h'),
-            'quoteVolume' => $this->safe_float($ticker, 'acc_trade_volume_24h'),
+            'baseVolume' => $this->safe_float($ticker, 'acc_trade_volume_24h'),
+            'quoteVolume' => $this->safe_float($ticker, 'acc_trade_price_24h'),
             'info' => $ticker,
         );
     }
@@ -772,12 +772,12 @@ class upbit extends Exchange {
         //                            unit =>  1                     ),
         //
         return array (
-            $this->safe_integer($ohlcv, 'timestamp'),
+            $this->parse8601 ($this->safe_string($ohlcv, 'candle_date_time_utc')),
             $this->safe_float($ohlcv, 'opening_price'),
             $this->safe_float($ohlcv, 'high_price'),
             $this->safe_float($ohlcv, 'low_price'),
             $this->safe_float($ohlcv, 'trade_price'),
-            $this->safe_float($ohlcv, 'candle_acc_trade_price'), // base volume
+            $this->safe_float($ohlcv, 'candle_acc_trade_volume'), // base volume
         );
     }
 
@@ -1210,7 +1210,7 @@ class upbit extends Exchange {
         );
         $market = null;
         if ($symbol !== null) {
-            $market = $this->market_id($symbol);
+            $market = $this->market ($symbol);
             $request['market'] = $market['id'];
         }
         $response = $this->privateGetOrders (array_merge ($request, $params));
@@ -1472,10 +1472,9 @@ class upbit extends Exchange {
         return array ( 'url' => $url, 'method' => $method, 'body' => $body, 'headers' => $headers );
     }
 
-    public function handle_errors ($httpCode, $reason, $url, $method, $headers, $body, $response = null) {
-        if (!$this->is_json_encoded_object($body))
+    public function handle_errors ($httpCode, $reason, $url, $method, $headers, $body, $response) {
+        if ($response === null)
             return; // fallback to default $error handler
-        $response = json_decode ($body, $as_associative_array = true);
         //
         //   array ( 'error' => array ( 'message' => "Missing request parameter $error-> Check the required parameters!", 'name' =>  400 ) ),
         //   array ( 'error' => array ( 'message' => "side is missing, side does not have a valid value", 'name' => "validation_error" ) ),

@@ -53,13 +53,13 @@ Full public and private HTTP REST APIs for all exchanges are implemented. WebSoc
 
 # Exchanges
 
-The ccxt library currently supports the following 132 cryptocurrency exchange markets and trading APIs:
+The ccxt library currently supports the following 133 cryptocurrency exchange markets and trading APIs:
 
 |                                                                                                                           | id                 | name                                                                                 | certified                                                                                                                   | ver   | doc                                                                                              | countries                               |
 |---------------------------------------------------------------------------------------------------------------------------|--------------------|--------------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------:|:-----:|--------------------------------------------------------------------------------------------------|-----------------------------------------|
 |![_1btcxe](https://user-images.githubusercontent.com/1294454/27766049-2b294408-5ecc-11e7-85cc-adaff013dc1a.jpg)            | _1btcxe            | [1BTCXE](https://1btcxe.com)                                                         |                                                                                                                             | *     | [API](https://1btcxe.com/api-docs.php)                                                           | Panama                                  |
 |![acx](https://user-images.githubusercontent.com/1294454/30247614-1fe61c74-9621-11e7-9e8c-f1a627afa279.jpg)                | acx                | [ACX](https://acx.io)                                                                |                                                                                                                             | 2     | [API](https://acx.io/documents/api_v2)                                                           | Australia                               |
-|![allcoin](https://user-images.githubusercontent.com/1294454/31561809-c316b37c-b061-11e7-8d5a-b547b4d730eb.jpg)            | allcoin            | [Allcoin](https://www.allcoin.com)                                                   |                                                                                                                             | 1     | [API](https://www.allcoin.com/About/APIReference)                                                | Canada                                  |
+|![allcoin](https://user-images.githubusercontent.com/1294454/31561809-c316b37c-b061-11e7-8d5a-b547b4d730eb.jpg)            | allcoin            | [Allcoin](https://www.allcoin.com)                                                   |                                                                                                                             | 1     | [API](https://www.allcoin.com/api_market/market)                                                 | Canada                                  |
 |![anxpro](https://user-images.githubusercontent.com/1294454/27765983-fd8595da-5ec9-11e7-82e3-adb3ab8c2612.jpg)             | anxpro             | [ANXPro](https://anxpro.com)                                                         |                                                                                                                             | 2     | [API](http://docs.anxv2.apiary.io)                                                               | Japan, Singapore, Hong Kong, New Zealand|
 |![anybits](https://user-images.githubusercontent.com/1294454/41388454-ae227544-6f94-11e8-82a4-127d51d34903.jpg)            | anybits            | [Anybits](https://anybits.com)                                                       |                                                                                                                             | *     | [API](https://anybits.com/help/api)                                                              | Ireland                                 |
 |![bcex](https://user-images.githubusercontent.com/1294454/43362240-21c26622-92ee-11e8-9464-5801ec526d77.jpg)               | bcex               | [BCEX](https://www.bcex.top/user/reg/type/2/pid/758978)                              |                                                                                                                             | 1     | [API](https://www.bcex.top/api_market/market/)                                                   | China, Canada                           |
@@ -120,6 +120,7 @@ The ccxt library currently supports the following 132 cryptocurrency exchange ma
 |![coinspot](https://user-images.githubusercontent.com/1294454/28208429-3cacdf9a-6896-11e7-854e-4c79a772a30f.jpg)           | coinspot           | [CoinSpot](https://www.coinspot.com.au)                                              |                                                                                                                             | *     | [API](https://www.coinspot.com.au/api)                                                           | Australia                               |
 |![cointiger](https://user-images.githubusercontent.com/1294454/39797261-d58df196-5363-11e8-9880-2ec78ec5bd25.jpg)          | cointiger          | [CoinTiger](https://www.cointiger.pro/exchange/register.html?refCode=FfvDtt)         |                                                                                                                             | 1     | [API](https://github.com/cointiger/api-docs-en/wiki)                                             | China                                   |
 |![coolcoin](https://user-images.githubusercontent.com/1294454/36770529-be7b1a04-1c5b-11e8-9600-d11f1996b539.jpg)           | coolcoin           | [CoolCoin](https://www.coolcoin.com)                                                 |                                                                                                                             | *     | [API](https://www.coolcoin.com/help.api.html)                                                    | Hong Kong                               |
+|![coss](https://user-images.githubusercontent.com/1294454/50328158-22e53c00-0503-11e9-825c-c5cfd79bfa74.jpg)               | coss               | [COSS](https://www.coss.io/c/reg?r=OWCMHQVW2Q)                                       | [![CCXT Certified](https://img.shields.io/badge/CCXT-certified-green.svg)](https://github.com/ccxt/ccxt/wiki/Certification) | 1     | [API](https://api.coss.io/v1/spec)                                                               | Singapore, Netherlands                  |
 |![crex24](https://user-images.githubusercontent.com/1294454/47813922-6f12cc00-dd5d-11e8-97c6-70f957712d47.jpg)             | crex24             | [CREX24](https://crex24.com/?refid=slxsjsjtil8xexl9hksr)                             |                                                                                                                             | 2     | [API](https://docs.crex24.com/trade-api/v2)                                                      | Estonia                                 |
 |![crypton](https://user-images.githubusercontent.com/1294454/41334251-905b5a78-6eed-11e8-91b9-f3aa435078a1.jpg)            | crypton            | [Crypton](https://cryptonbtc.com)                                                    |                                                                                                                             | 1     | [API](https://cryptonbtc.docs.apiary.io/)                                                        | EU                                      |
 |![cryptopia](https://user-images.githubusercontent.com/1294454/29484394-7b4ea6e2-84c6-11e7-83e5-1fccf4b2dc81.jpg)          | cryptopia          | [Cryptopia](https://www.cryptopia.co.nz/Register?referrer=kroitor)                   |                                                                                                                             | *     | [API](https://support.cryptopia.co.nz/csm?id=kb_article&sys_id=a75703dcdbb9130084ed147a3a9619bc) | New Zealand                             |
@@ -183,7 +184,7 @@ The ccxt library currently supports the following 132 cryptocurrency exchange ma
 |![vaultoro](https://user-images.githubusercontent.com/1294454/27766880-f205e870-5ee9-11e7-8fe2-0d5b15880752.jpg)           | vaultoro           | [Vaultoro](https://www.vaultoro.com)                                                 |                                                                                                                             | 1     | [API](https://api.vaultoro.com)                                                                  | Switzerland                             |
 |![vbtc](https://user-images.githubusercontent.com/1294454/27991481-1f53d1d8-6481-11e7-884e-21d17e7939db.jpg)               | vbtc               | [VBTC](https://vbtc.exchange)                                                        |                                                                                                                             | 1     | [API](https://blinktrade.com/docs)                                                               | Vietnam                                 |
 |![virwox](https://user-images.githubusercontent.com/1294454/27766894-6da9d360-5eea-11e7-90aa-41f2711b7405.jpg)             | virwox             | [VirWoX](https://www.virwox.com)                                                     |                                                                                                                             | *     | [API](https://www.virwox.com/developers.php)                                                     | Austria, EU                             |
-|![wex](https://user-images.githubusercontent.com/1294454/30652751-d74ec8f8-9e31-11e7-98c5-71469fcef03e.jpg)                | wex                | [WEX](https://wex.link)                                                              |                                                                                                                             | 3     | [API](https://wex.link/api/3/docs)                                                               | New Zealand                             |
+|![wex](https://user-images.githubusercontent.com/1294454/30652751-d74ec8f8-9e31-11e7-98c5-71469fcef03e.jpg)                | wex                | [WEX](https://wex1.in)                                                               |                                                                                                                             | 3     | [API](https://wex1.in/api/3/docs)                                                                | New Zealand                             |
 |![xbtce](https://user-images.githubusercontent.com/1294454/28059414-e235970c-662c-11e7-8c3a-08e31f78684b.jpg)              | xbtce              | [xBTCe](https://www.xbtce.com)                                                       |                                                                                                                             | 1     | [API](https://www.xbtce.com/tradeapi)                                                            | Russia                                  |
 |![yobit](https://user-images.githubusercontent.com/1294454/27766910-cdcbfdae-5eea-11e7-9859-03fea873272d.jpg)              | yobit              | [YoBit](https://www.yobit.net)                                                       |                                                                                                                             | 3     | [API](https://www.yobit.net/en/api/)                                                             | Russia                                  |
 |![yunbi](https://user-images.githubusercontent.com/1294454/28570548-4d646c40-7147-11e7-9cf6-839b93e6d622.jpg)              | yunbi              | [YUNBI](https://yunbi.com)                                                           |                                                                                                                             | 2     | [API](https://yunbi.com/documents/api/guide)                                                     | China                                   |
@@ -553,9 +554,9 @@ In terms of the ccxt library, every exchange offers multiple markets within itse
     'quote':  'USD',      // uppercase string, quote currency, 3 or more letters
     'active': true,       // boolean, market status
     'precision': {        // number of decimal digits "after the dot"
-        'price': 8,       // integer
-        'amount': 8,      // integer
-        'cost': 8,        // integer
+        'price': 8,       // integer, might be missing if not supplied by the exchange
+        'amount': 8,      // integer, might be missing if not supplied by the exchange
+        'cost': 8,        // integer, very few exchanges actually have it
     },
     'limits': {           // value limits when placing orders on this market
         'amount': {
@@ -773,7 +774,9 @@ Historically various symbolic names have been used to designate same trading pai
 
 - `XBT → BTC`: `XBT` is newer but `BTC` is more common among exchanges and sounds more like bitcoin ([read more](https://www.google.ru/search?q=xbt+vs+btc)).
 - `BCC → BCH`: The Bitcoin Cash fork is often called with two different symbolic names: `BCC` and `BCH`. The name `BCC` is ambiguous for Bitcoin Cash, it is confused with BitConnect. The ccxt library will convert `BCC` to `BCH` where it is appropriate (some exchanges and aggregators confuse them).
-- `DRK → DASH`: `DASH` was Darkcoin then became Dash ([read more](https://minergate.com/blog/dashcoin-and-dash/)). **UPD. On November 15 2018 Bitcoin Cash forked the second time, so, now there is `BCHABC` and `BCHSV`.**
+- `DRK → DASH`: `DASH` was Darkcoin then became Dash ([read more](https://minergate.com/blog/dashcoin-and-dash/)).
+- `BCHABC → BCH`: On November 15 2018 Bitcoin Cash forked the second time, so, now there is `BCH` (for BCH ABC) and `BSV` (for BCH SV).
+- `BCHSV → BSV`: This is a common substitution mapping for the Bitcoin Cash SV fork (some exchanges call it `BSV`, others call it `BCHSV`, we use the former).
 - `DSH → DASH`: Try not to confuse symbols and currencies. The `DSH` (Dashcoin) is not the same as `DASH` (Dash). Some exchanges have `DASH` labelled inconsistently as `DSH`, the ccxt library does a correction for that as well (`DSH → DASH`), but only on certain exchanges that have these two currencies confused, whereas most exchanges have them both correct. Just remember that `DASH/BTC` is not the same as `DSH/BTC`.
 - `XRB` → `NANO`: `NANO` is the newer code for RaiBlocks, thus, CCXT unified API uses will replace the older `XRB` with `NANO` where needed. https://hackernoon.com/nano-rebrand-announcement-9101528a7b76
 - `USD` → `USDT`: Some exchanges, like Bitfinex, HitBTC and a few other name the currency as `USD` in their listings, but those markets are actually trading `USDT`. The confusion can come from a 3-letter limitation on symbol names or may be due to other reasons. In cases where the traded currency is actually `USDT` and is not `USD` – the CCXT library will perform `USD` → `USDT` conversion. Note, however, that some exchanges  have both `USD` and `USDT` symbols, for example, Kraken has a `USDT/USD` trading pair.
@@ -1354,6 +1357,8 @@ foreach ($exchange->markets as $symbol => $market) {
     usleep ($delay); // rate limit
 }
 ```
+
+### Order Book Structure
 
 The structure of a returned order book is as follows:
 
@@ -2649,6 +2654,8 @@ In some cases you can also use the withdrawal id to check withdrawal status late
 
 if (exchange.has['fetchDeposits']) {
     const deposits = await exchange.fetchDeposits (code, since, limit, params)
+} else {
+    throw new Error (exchange.id + ' does not have the fetchDeposits method')
 }
 ```
 
@@ -2656,9 +2663,10 @@ if (exchange.has['fetchDeposits']) {
 # Python
 # fetch_deposits(code = None, since = None, limit = None, params = {})
 
-if (exchange.has['fetchDeposits']) {
+if exchange.has['fetchDeposits']:
     deposits = exchange.fetch_deposits(code, since, limit, params)
-}
+else:
+    raise Exception (exchange.id + ' does not have the fetch_deposits method')
 ```
 
 ```PHP
@@ -2667,6 +2675,8 @@ if (exchange.has['fetchDeposits']) {
 
 if ($exchange->has['fetchDeposits']) {
     $deposits = $exchange->fetch_deposits ($code, $since, $limit, $params);
+} else {
+    throw new Exception ($exchange->id . ' does not have the fetch_deposits method');
 }
 ```
 
@@ -2678,6 +2688,8 @@ if ($exchange->has['fetchDeposits']) {
 
 if (exchange.has['fetchWithdrawals']) {
     const withdrawals = await exchange.fetchWithdrawals (code, since, limit, params)
+} else {
+    throw new Error (exchange.id + ' does not have the fetchWithdrawals method')
 }
 ```
 
@@ -2685,9 +2697,10 @@ if (exchange.has['fetchWithdrawals']) {
 # Python
 # fetch_withdrawals(code = None, since = None, limit = None, params = {})
 
-if (exchange.has['fetchWithdrawals']) {
+if exchange.has['fetchWithdrawals']:
     withdrawals = exchange.fetch_withdrawals(code, since, limit, params)
-}
+else:
+    raise Exception (exchange.id + ' does not have the fetch_withdrawals method')
 ```
 
 ```PHP
@@ -2696,6 +2709,8 @@ if (exchange.has['fetchWithdrawals']) {
 
 if ($exchange->has['fetchWithdrawals']) {
     $withdrawals = $exchange->fetch_withdrawals ($code, $since, $limit, $params);
+} else {
+    throw new Exception ($exchange->id . ' does not have the fetch_withdrawals method');
 }
 ```
 
@@ -2707,6 +2722,8 @@ if ($exchange->has['fetchWithdrawals']) {
 
 if (exchange.has['fetchTransactions']) {
     const transactions = await exchange.fetchTransactions (code, since, limit, params)
+} else {
+    throw new Error (exchange.id + ' does not have the fetchTransactions method')
 }
 ```
 
@@ -2714,9 +2731,10 @@ if (exchange.has['fetchTransactions']) {
 # Python
 # fetch_transactions(code = None, since = None, limit = None, params = {})
 
-if (exchange.has['fetchTransactions']) {
+if exchange.has['fetchTransactions']:
     transactions = exchange.fetch_transactions(code, since, limit, params)
-}
+else:
+    raise Exception (exchange.id + ' does not have the fetch_transactions method')
 ```
 
 ```PHP
@@ -2725,6 +2743,8 @@ if (exchange.has['fetchTransactions']) {
 
 if ($exchange->has['fetchTransactions']) {
     $transactions = $exchange->fetch_transactions ($code, $since, $limit, $params);
+} else {
+    throw new Exception ($exchange->id . ' does not have the fetch_transactions method');
 }
 ```
 ## Fees

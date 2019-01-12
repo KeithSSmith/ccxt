@@ -34,7 +34,7 @@ use kornrunner\Eth;
 use kornrunner\Secp256k1;
 use kornrunner\Solidity;
 
-$version = '1.17.572';
+$version = '1.18.120';
 
 // rounding mode
 const TRUNCATE = 0;
@@ -50,7 +50,7 @@ const PAD_WITH_ZERO = 1;
 
 class Exchange {
 
-    const VERSION = '1.17.572';
+    const VERSION = '1.18.120';
 
     public static $eth_units = array (
         'wei'        => '1',
@@ -143,6 +143,7 @@ class Exchange {
         'coinspot',
         'cointiger',
         'coolcoin',
+        'coss',
         'crex24',
         'crypton',
         'cryptopia',
@@ -465,8 +466,12 @@ class Exchange {
     }
 
     public static function implode_params ($string, $params) {
-        foreach ($params as $key => $value)
-            $string = implode ($value, mb_split ('{' . $key . '}', $string));
+        foreach ($params as $key => $value) {
+            if (gettype ($value) !== 'array') {
+                $string = implode ($value, mb_split ('{' . $key . '}', $string));
+            }
+
+        }
         return $string;
     }
 
@@ -569,7 +574,7 @@ class Exchange {
         $timestamp = (int) $timestamp;
         if ($timestamp < 0)
             return null;
-        $result = date ('c', (int) round ($timestamp / 1000));
+        $result = date ('c', (int) floor ($timestamp / 1000));
         $msec = (int) $timestamp % 1000;
         $result = str_replace ('+00:00', sprintf (".%03dZ", $msec), $result);
         return $result;
@@ -631,18 +636,6 @@ class Exchange {
         return json_encode ($data, $flags);
     }
 
-    public static function parse_if_json_encoded_object ($input) {
-        if ((gettype ($input) !== 'string') || (strlen ($input) < 2)) {
-            return $input;
-        }
-        if ($input[0] === '{') {
-            return json_decode ($input, $as_associative_array = true);
-        } else if ($input[1] === '[') {
-            return json_decode ($input);
-        }
-        return $input;
-    }
-
     public static function is_json_encoded_object ($input) {
         return (gettype ($input) === 'string') &&
                 (strlen ($input) >= 2) &&
@@ -661,11 +654,15 @@ class Exchange {
         return $this->seconds ();
     }
 
-    public function check_required_credentials () {
+    public function check_required_credentials ($error = true) {
         $keys = array_keys ($this->requiredCredentials);
         foreach ($this->requiredCredentials as $key => $value) {
             if ($value && (!$this->$key)) {
-                throw new AuthenticationError ($this->id . ' requires `' . $key . '`');
+                if ($error) {
+                    throw new AuthenticationError ($this->id . ' requires `' . $key . '`');
+                } else {
+                    return $error;
+                }
             }
         }
     }
@@ -772,6 +769,7 @@ class Exchange {
             '521' => 'ExchangeNotAvailable',
             '522' => 'ExchangeNotAvailable',
             '525' => 'ExchangeNotAvailable',
+            '526' => 'ExchangeNotAvailable',
             '400' => 'ExchangeNotAvailable',
             '403' => 'ExchangeNotAvailable',
             '405' => 'ExchangeNotAvailable',
@@ -790,7 +788,7 @@ class Exchange {
         $this->privateKey    = '';
         $this->walletAddress = '';
 
-        $this->twofa         = false;
+        $this->twofa         = null;
         $this->marketsById   = null;
         $this->markets_by_id = null;
         $this->currencies_by_id = null;
@@ -802,7 +800,6 @@ class Exchange {
         $this->minFundingAddressLength = 1; // used in check_address
         $this->substituteCommonCurrencyCodes = true;
         $this->timeframes = null;
-        $this->parseJsonResponse = true;
 
         $this->requiredCredentials = array (
             'apiKey' => true,
@@ -871,7 +868,9 @@ class Exchange {
         $this->commonCurrencies = array (
             'XBT' => 'BTC',
             'BCC' => 'BCH',
-            'DRK' => 'DASH'
+            'DRK' => 'DASH',
+            'BCHABC' => 'BCH',
+            'BCHSV' => 'BSV',
         );
 
         $this->urlencode_glue = ini_get ('arg_separator.output'); // can be overrided by exchange constructor params
@@ -946,7 +945,7 @@ class Exchange {
         throw new NotSupported ($this->id . ' camelcase() not implemented yet');
     }
 
-    public function hash ($request, $type = 'md5', $digest = 'hex') {
+    public static function hash ($request, $type = 'md5', $digest = 'hex') {
         $base64 = ($digest === 'base64');
         $binary = ($digest === 'binary');
         $hash = hash ($type, $request, ($binary || $base64) ? true : false);
@@ -955,7 +954,7 @@ class Exchange {
         return $hash;
     }
 
-    public function hmac ($request, $secret, $type = 'sha256', $digest = 'hex') {
+    public static function hmac ($request, $secret, $type = 'sha256', $digest = 'hex') {
         $base64 = ($digest === 'base64');
         $binary = ($digest === 'binary');
         $hmac = hash_hmac ($type, $request, $secret, ($binary || $base64) ? true : false);
@@ -1020,8 +1019,12 @@ class Exchange {
         return null;
     }
 
-    public function handle_errors ($code, $reason, $url, $method, $headers, $body, $response = null) {
+    public function handle_errors ($code, $reason, $url, $method, $headers, $body, $response) {
         // it's a stub function, does nothing in base code
+    }
+
+    public function parse_json ($json_string) {
+        return json_decode ($json_string, $as_associative_array = true);
     }
 
     public function fetch ($url, $method = 'GET', $headers = null, $body = null) {
@@ -1085,6 +1088,11 @@ class Exchange {
             curl_setopt ($this->curl, CURLOPT_POSTFIELDS, $body);
 
             $headers[] = 'X-HTTP-Method-Override: PUT';
+
+        } else if ($method == 'PATCH') {
+
+            curl_setopt ($this->curl, CURLOPT_CUSTOMREQUEST, "PATCH");
+            curl_setopt ($this->curl, CURLOPT_POSTFIELDS, $body);
 
         } else if ($method == 'DELETE') {
 
@@ -1155,11 +1163,9 @@ class Exchange {
 
         $json_response = null;
 
-        if ($this->parseJsonResponse) {
-
-            $json_response =
-                ((gettype ($result) == 'string') &&  (strlen ($result) > 1)) ?
-                    json_decode ($result, $as_associative_array = true) : null;
+        if ($this->is_json_encoded_object ($result)) {
+         
+            $json_response = $this->parse_json ($result, $as_associative_array = true);
 
             if ($this->enableLastJsonResponse) {
                 $this->last_json_response = $json_response;
@@ -1178,7 +1184,7 @@ class Exchange {
             print_r (array ($method, $url, $http_status_code, $curl_error, $response_headers, $result));
         }
 
-        $this->handle_errors ($http_status_code, $curl_error, $url, $method, $response_headers, $result ? $result : null);
+        $this->handle_errors ($http_status_code, $curl_error, $url, $method, $response_headers, $result ? $result : null, $json_response);
 
         if ($result === false) {
 
@@ -1207,14 +1213,14 @@ class Exchange {
                         'DDoS protection',
                         'rate-limiting in effect',
                     )) . ')';
-                    $this->raise_error ($error_class, $url, $method, $http_status_code, $result, $details);
                 }
+                $this->raise_error ($error_class, $url, $method, $http_status_code, $result, $details);
             } else {
                 $this->raise_error ($error_class, $url, $method, $http_status_code, $result);
             }
         }
 
-        if ($this->parseJsonResponse && !$json_response) {
+        if (!$json_response) {
 
             if (preg_match ('#offline|busy|retry|wait|unavailable|maintain|maintenance|maintenancing#i', $result)) {
 
@@ -1235,7 +1241,7 @@ class Exchange {
             }
         }
 
-        return $this->parseJsonResponse ? $json_response : $result;
+        return $json_response ? $json_response : $result;
     }
 
     public function set_markets ($markets, $currencies = null) {
@@ -1657,28 +1663,36 @@ class Exchange {
         return $this->fetch_my_trades ($symbol, $since, $limit, $params);
     }
 
-    public function fetchTransactions ($symbol = null, $since = null, $limit = null, $params = array ()) {
-        return $this->fetch_transactions ($symbol, $since, $limit, $params);
+    public function fetchTransactions ($code = null, $since = null, $limit = null, $params = array ()) {
+        return $this->fetch_transactions ($code, $since, $limit, $params);
     }
 
-    public function fetch_transactions ($symbol = null, $since = null, $limit = null, $params = array ()) {
+    public function fetch_transactions ($code = null, $since = null, $limit = null, $params = array ()) {
         throw new NotSupported ($this->id . ' fetch_transactions() not implemented yet');
     }
 
-    public function fetchDeposits ($symbol = null, $since = null, $limit = null, $params = array ()) {
-        return $this->fetch_deposits ($symbol, $since, $limit, $params);
+    public function fetchDeposits ($code = null, $since = null, $limit = null, $params = array ()) {
+        return $this->fetch_deposits ($code, $since, $limit, $params);
     }
 
-    public function fetch_deposits ($symbol = null, $since = null, $limit = null, $params = array ()) {
+    public function fetch_deposits ($code = null, $since = null, $limit = null, $params = array ()) {
         throw new NotSupported ($this->id . ' fetch_deposits() not implemented yet');
     }
 
-    public function fetchWithdrawals ($symbol = null, $since = null, $limit = null, $params = array ()) {
-        return $this->fetch_withdrawals ($symbol, $since, $limit, $params);
+    public function fetchWithdrawals ($code = null, $since = null, $limit = null, $params = array ()) {
+        return $this->fetch_withdrawals ($code, $since, $limit, $params);
     }
 
-    public function fetch_withdrawals ($symbol = null, $since = null, $limit = null, $params = array ()) {
+    public function fetch_withdrawals ($code = null, $since = null, $limit = null, $params = array ()) {
         throw new NotSupported ($this->id . ' fetch_withdrawals() not implemented yet');
+    }
+
+    public function fetchDepositAddress ($code, $params = array ()) {
+        return $this->fetch_deposit_address ($code, $params);
+    }
+
+    public function fetch_deposit_address ($code, $params = array ()) {
+        throw new NotSupported ($this->id . ' fetch_deposit_address() not implemented yet');
     }
 
     public function fetch_markets ($params = array()) {
@@ -1847,6 +1861,18 @@ class Exchange {
 
     public function create_market_sell_order ($symbol, $amount, $params = array ()) {
         return $this->create_order ($symbol, 'market', 'sell', $amount, null, $params);
+    }
+
+    public function createOrder ($symbol, $type, $side, $amount, $price = null, $params = array ()) {
+        return $this->create_order ($symbol, $type, $side, $amount, $price, $params);
+    }
+
+    public function createLimitOrder ($symbol, $side, $amount, $price, $params = array ()) {
+        return $this->create_limit_order ($symbol, $side, $amount, $price, $params);
+    }
+
+    public function createMarketOrder ($symbol, $side, $amount, $price = null, $params = array ()) {
+        return $this->create_market_order ($symbol, $side, $amount, $price, $params);
     }
 
     public function createLimitBuyOrder ($symbol, $amount, $price, $params = array ()) {
@@ -2085,10 +2111,6 @@ class Exchange {
 
     public static function decimal_to_precision ($x, $roundingMode = ROUND, $numPrecisionDigits = null, $countingMode = DECIMAL_PLACES, $paddingMode = NO_PADDING) {
 
-        if ($numPrecisionDigits < 0) {
-            throw new BaseError ('Negative precision is not yet supported');
-        }
-
         if (!is_int ($numPrecisionDigits)) {
             throw new BaseError ('Precision must be an integer');
         }
@@ -2100,6 +2122,19 @@ class Exchange {
         assert ($roundingMode === ROUND || $roundingMode === TRUNCATE);
 
         $result = '';
+
+        // Special handling for negative precision
+        if ($numPrecisionDigits < 0) {
+            $toNearest = 10 ** abs ($numPrecisionDigits);
+            if ($roundingMode === ROUND) {
+                $result = (string) ($toNearest * decimal_to_precision ($x / $toNearest, $roundingMode, 0, DECIMAL_PLACES, $paddingMode));
+            }
+            if ($roundingMode === TRUNCATE) {
+                $result = decimal_to_precision ($x - $x % $toNearest, $roundingMode, 0, DECIMAL_PLACES, $paddingMode);
+            }
+            return $result;
+        }
+
         if ($roundingMode === ROUND) {
             if ($countingMode === DECIMAL_PLACES) {
                 // Requested precision of 100 digits was truncated to PHP maximum of 53 digits
@@ -2175,7 +2210,9 @@ class Exchange {
                 }
             }
         }
-
+        if (($result === '-0') || ($result === '-0.'. str_repeat ('0', max (strlen ($result) - 3, 0)))) {
+            $result = substr ($result, 1);
+        }
         return $result;
     }
 
@@ -2346,4 +2383,40 @@ class Exchange {
         return $this->signHash ($this->hashMessage ($message), $privateKey);
     }
 
+    public function oath () {
+        if ($this->twofa) {
+            return $this->totp ($this->twofa);
+        } else {
+            throw new ExchangeError ($this->id . ' requires a non-empty value in $this->twofa property');
+        }
+    }
+
+    public static function totp ($key) {
+        function base32_decode($s){
+            static $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+            $tmp = '';
+            foreach (str_split($s) as $c) {
+                if (false === ($v = strpos($alphabet, $c))) {
+                    $v = 0;
+                }
+                $tmp .= sprintf('%05b', $v);
+            }
+            $args = array_map('bindec', str_split($tmp, 8));
+            array_unshift($args, 'C*');
+            return rtrim(call_user_func_array('pack', $args), "\0");
+        }
+        $noSpaceKey = str_replace (' ', '', $key);
+        $encodedKey = base32_decode($noSpaceKey);
+        $epoch = floor (time() / 30);
+        $encodedEpoch = pack ('J', $epoch);
+        $hmacResult = static::hmac($encodedEpoch, $encodedKey,"sha1", "hex");
+        $hmac = [];
+        foreach (str_split($hmacResult, 2) as $hex) {
+            $hmac[] = hexdec($hex);
+        }
+        $offset = $hmac[count($hmac) - 1] & 0xF;
+        $code = ($hmac[$offset + 0] & 0x7F) << 24 | ($hmac[$offset + 1] & 0xFF) << 16 | ($hmac[$offset + 2] & 0xFF) << 8 | ($hmac[$offset + 3] & 0xFF);
+        $otp = $code % pow(10, 6);
+        return str_pad((string) $otp, 6, '0', STR_PAD_LEFT);
+    }
 }

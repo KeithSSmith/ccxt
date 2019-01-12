@@ -235,9 +235,9 @@ class poloniex extends Exchange {
         for ($p = 0; $p < count ($keys); $p++) {
             $id = $keys[$p];
             $market = $markets[$id];
-            list ($quote, $base) = explode ('_', $id);
-            $base = $this->common_currency_code($base);
-            $quote = $this->common_currency_code($quote);
+            list ($quoteId, $baseId) = explode ('_', $id);
+            $base = $this->common_currency_code($baseId);
+            $quote = $this->common_currency_code($quoteId);
             $symbol = $base . '/' . $quote;
             $minCost = $this->safe_float($this->options['limits']['cost']['min'], $quote, 0.0);
             $precision = array (
@@ -247,9 +247,11 @@ class poloniex extends Exchange {
             $result[] = array_merge ($this->fees['trading'], array (
                 'id' => $id,
                 'symbol' => $symbol,
+                'baseId' => $baseId,
+                'quoteId' => $quoteId,
                 'base' => $base,
                 'quote' => $quote,
-                'active' => true,
+                'active' => $market['isFrozen'] !== '1',
                 'precision' => $precision,
                 'limits' => array (
                     'amount' => array (
@@ -916,7 +918,7 @@ class poloniex extends Exchange {
         $this->load_markets();
         $year = 31104000; // 60 * 60 * 24 * 30 * 12 = one $year of history, why not
         $now = $this->seconds ();
-        $start = ($since !== null) ? intval ($since / 1000) : $now - $year;
+        $start = ($since !== null) ? intval ($since / 1000) : $now - 10 * $year;
         $request = array (
             'start' => $start, // UNIX timestamp, required
             'end' => $now, // UNIX timestamp, required
@@ -968,6 +970,7 @@ class poloniex extends Exchange {
     }
 
     public function fetch_transactions ($code = null, $since = null, $limit = null, $params = array ()) {
+        $this->load_markets();
         $response = $this->fetch_transactions_helper ($code, $since, $limit, $params);
         for ($i = 0; $i < count ($response['deposits']); $i++) {
             $response['deposits'][$i]['type'] = 'deposit';
@@ -975,8 +978,12 @@ class poloniex extends Exchange {
         for ($i = 0; $i < count ($response['withdrawals']); $i++) {
             $response['withdrawals'][$i]['type'] = 'withdrawal';
         }
-        $withdrawals = $this->parseTransactions ($response['withdrawals'], $code, $since, $limit);
-        $deposits = $this->parseTransactions ($response['deposits'], $code, $since, $limit);
+        $currency = null;
+        if ($code !== null) {
+            $currency = $this->currency ($code);
+        }
+        $withdrawals = $this->parseTransactions ($response['withdrawals'], $currency, $since, $limit);
+        $deposits = $this->parseTransactions ($response['deposits'], $currency, $since, $limit);
         $transactions = $this->array_concat($deposits, $withdrawals);
         return $this->filterByCurrencySinceLimit ($this->sort_by($transactions, 'timestamp'), $code, $since, $limit);
     }
@@ -986,7 +993,11 @@ class poloniex extends Exchange {
         for ($i = 0; $i < count ($response['withdrawals']); $i++) {
             $response['withdrawals'][$i]['type'] = 'withdrawal';
         }
-        $withdrawals = $this->parseTransactions ($response['withdrawals'], $code, $since, $limit);
+        $currency = null;
+        if ($code !== null) {
+            $currency = $this->currency ($code);
+        }
+        $withdrawals = $this->parseTransactions ($response['withdrawals'], $currency, $since, $limit);
         return $this->filterByCurrencySinceLimit ($withdrawals, $code, $since, $limit);
     }
 
@@ -995,7 +1006,11 @@ class poloniex extends Exchange {
         for ($i = 0; $i < count ($response['deposits']); $i++) {
             $response['deposits'][$i]['type'] = 'deposit';
         }
-        $deposits = $this->parseTransactions ($response['deposits'], $code, $since, $limit);
+        $currency = null;
+        if ($code !== null) {
+            $currency = $this->currency ($code);
+        }
+        $deposits = $this->parseTransactions ($response['deposits'], $currency, $since, $limit);
         return $this->filterByCurrencySinceLimit ($deposits, $code, $since, $limit);
     }
 
@@ -1058,13 +1073,14 @@ class poloniex extends Exchange {
         $amount = $this->safe_float($transaction, 'amount');
         $address = $this->safe_string($transaction, 'address');
         $feeCost = $this->safe_float($transaction, 'fee');
-        if ($feeCost === null) {
-            if ($type === 'deposit') {
+        if ($type === 'deposit') {
+            if ($feeCost === null) {
                 // according to https://poloniex.com/fees/
                 $feeCost = 0; // FIXME => remove hardcoded value that may change any time
-            } else if ($type === 'withdrawal') {
-                throw new ExchangeError ('Withdrawal without fee detected!');
             }
+        } else {
+            // poloniex withdrawal $amount includes the fee
+            $amount = $amount - $feeCost;
         }
         return array (
             'info' => $transaction,
@@ -1108,11 +1124,8 @@ class poloniex extends Exchange {
         return array ( 'url' => $url, 'method' => $method, 'body' => $body, 'headers' => $headers );
     }
 
-    public function handle_errors ($code, $reason, $url, $method, $headers, $body, $response = null) {
-        try {
-            $response = json_decode ($body, $as_associative_array = true);
-        } catch (Exception $e) {
-            // syntax error, resort to default error handler
+    public function handle_errors ($code, $reason, $url, $method, $headers, $body, $response) {
+        if ($response === null) {
             return;
         }
         // array ("error":"Permission denied.")

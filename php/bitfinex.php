@@ -204,6 +204,7 @@ class bitfinex extends Exchange {
                         'AID' => 8.08,
                         'MNA' => 16.617,
                         'NEC' => 1.6504,
+                        'XTZ' => 0.2,
                     ),
                     'withdraw' => array (
                         'BTC' => 0.0004,
@@ -245,6 +246,7 @@ class bitfinex extends Exchange {
                         'AID' => 8.08,
                         'MNA' => 16.617,
                         'NEC' => 1.6504,
+                        'XTZ' => 0.2,
                     ),
                 ),
             ),
@@ -252,15 +254,11 @@ class bitfinex extends Exchange {
                 'ABS' => 'ABYSS',
                 'AIO' => 'AION',
                 'ATM' => 'ATMI',
-                'BAB' => 'BCHABC',
-                'BCC' => 'CST_BCC',
-                'BCU' => 'CST_BCU',
-                'BSV' => 'BCHSV',
+                'BAB' => 'BCH',
                 'CTX' => 'CTXC',
                 'DAD' => 'DADI',
                 'DAT' => 'DATA',
                 'DSH' => 'DASH',
-                'EUR' => 'EURT',
                 'HOT' => 'Hydro Protocol',
                 'IOS' => 'IOST',
                 'IOT' => 'IOTA',
@@ -277,7 +275,6 @@ class bitfinex extends Exchange {
                 'SPK' => 'SPANK',
                 'STJ' => 'STORJ',
                 'YYW' => 'YOYOW',
-                'USD' => 'USDT',
                 'UTN' => 'UTNP',
             ),
             'exceptions' => array (
@@ -370,6 +367,7 @@ class bitfinex extends Exchange {
                     'YOYOW' => 'yoyow',
                     'ZEC' => 'zcash',
                     'ZRX' => 'zrx',
+                    'XTZ' => 'tezos',
                 ),
             ),
         ));
@@ -510,10 +508,9 @@ class bitfinex extends Exchange {
         $tickers = $this->publicGetTickers ($params);
         $result = array ();
         for ($i = 0; $i < count ($tickers); $i++) {
-            $ticker = $tickers[$i];
-            $parsedTicker = $this->parse_ticker($ticker);
-            $symbol = $parsedTicker['symbol'];
-            $result[$symbol] = $parsedTicker;
+            $ticker = $this->parse_ticker($tickers[$i]);
+            $symbol = $ticker['symbol'];
+            $result[$symbol] = $ticker;
         }
         return $result;
     }
@@ -978,12 +975,11 @@ class bitfinex extends Exchange {
         return array ( 'url' => $url, 'method' => $method, 'body' => $body, 'headers' => $headers );
     }
 
-    public function handle_errors ($code, $reason, $url, $method, $headers, $body, $response = null) {
+    public function handle_errors ($code, $reason, $url, $method, $headers, $body, $response) {
         if (strlen ($body) < 2)
             return;
         if ($code >= 400) {
             if ($body[0] === '{') {
-                $response = json_decode ($body, $as_associative_array = true);
                 $feedback = $this->id . ' ' . $this->json ($response);
                 $message = null;
                 if (is_array ($response) && array_key_exists ('message', $response)) {

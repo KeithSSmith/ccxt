@@ -4,7 +4,6 @@
 # https://github.com/ccxt/ccxt/blob/master/CONTRIBUTING.md#how-to-contribute-code
 
 from ccxt.base.exchange import Exchange
-import json
 from ccxt.base.errors import ExchangeError
 from ccxt.base.errors import AuthenticationError
 from ccxt.base.errors import PermissionDenied
@@ -145,6 +144,7 @@ class bitmex (Exchange):
                     'Invalid API Key.': AuthenticationError,
                     'Access Denied': PermissionDenied,
                     'Duplicate clOrdID': InvalidOrder,
+                    'Signature not valid': AuthenticationError,
                 },
                 'broad': {
                     'overloaded': ExchangeNotAvailable,
@@ -152,6 +152,7 @@ class bitmex (Exchange):
                 },
             },
             'options': {
+                'api-expires': None,
                 'fetchTickerQuotes': False,
             },
         })
@@ -387,8 +388,7 @@ class bitmex (Exchange):
         # if since is not set, they will return candles starting from 2017-01-01
         if since is not None:
             ymdhms = self.ymdhms(since)
-            ymdhm = ymdhms[0:16]
-            request['startTime'] = ymdhm  # starting date filter for results
+            request['startTime'] = ymdhms  # starting date filter for results
         response = self.publicGetTradeBucketed(self.extend(request, params))
         return self.parse_ohlcvs(response, market, timeframe, since, limit)
 
@@ -553,13 +553,12 @@ class bitmex (Exchange):
             'id': response['transactID'],
         }
 
-    def handle_errors(self, code, reason, url, method, headers, body, response=None):
+    def handle_errors(self, code, reason, url, method, headers, body, response):
         if code == 429:
             raise DDoSProtection(self.id + ' ' + body)
         if code >= 400:
             if body:
                 if body[0] == '{':
-                    response = json.loads(body)
                     error = self.safe_value(response, 'error', {})
                     message = self.safe_string(error, 'message')
                     feedback = self.id + ' ' + body
@@ -585,16 +584,24 @@ class bitmex (Exchange):
         url = self.urls['api'] + query
         if api == 'private':
             self.check_required_credentials()
+            auth = method + query
+            expires = self.safe_integer(self.options, 'api-expires')
             nonce = str(self.nonce())
-            auth = method + query + nonce
+            headers = {
+                'Content-Type': 'application/json',
+                'api-key': self.apiKey,
+            }
+            if expires is not None:
+                expires = self.sum(self.seconds(), expires)
+                expires = str(expires)
+                auth += expires
+                headers['api-expires'] = expires
+            else:
+                auth += nonce
+                headers['api-nonce'] = nonce
             if method == 'POST' or method == 'PUT':
                 if params:
                     body = self.json(params)
                     auth += body
-            headers = {
-                'Content-Type': 'application/json',
-                'api-nonce': nonce,
-                'api-key': self.apiKey,
-                'api-signature': self.hmac(self.encode(auth), self.encode(self.secret)),
-            }
+            headers['api-signature'] = self.hmac(self.encode(auth), self.encode(self.secret))
         return {'url': url, 'method': method, 'body': body, 'headers': headers}

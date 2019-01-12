@@ -14,7 +14,6 @@ except NameError:
 import base64
 import hashlib
 import math
-import json
 from ccxt.base.errors import ExchangeError
 from ccxt.base.errors import AuthenticationError
 from ccxt.base.errors import ArgumentsRequired
@@ -40,7 +39,6 @@ class kraken (Exchange):
             'version': '0',
             'rateLimit': 3000,
             'certified': True,
-            'parseJsonResponse': False,
             'has': {
                 'createDepositAddress': True,
                 'fetchDepositAddress': True,
@@ -136,6 +134,7 @@ class kraken (Exchange):
                         'GNO': 0.01,
                         'EOS': 0.5,
                         'BCH': 0.001,
+                        'XTZ': 0.05,
                         'USD': 5,  # if domestic wire
                         'EUR': 5,  # if domestic wire
                         'CAD': 10,  # CAD EFT Withdrawal
@@ -158,6 +157,7 @@ class kraken (Exchange):
                         'GNO': 0,
                         'EOS': 0,
                         'BCH': 0,
+                        'XTZ': 0.05,
                         'USD': 5,  # if domestic wire
                         'EUR': 0,  # free deposit if EUR SEPA Deposit
                         'CAD': 5,  # if domestic wire
@@ -709,6 +709,16 @@ class kraken (Exchange):
         self.options['delistedMarketsById'][id] = market
         return market
 
+    def parse_order_status(self, status):
+        statuses = {
+            'pending': 'open',  # order pending book entry
+            'open': 'open',
+            'closed': 'closed',
+            'canceled': 'canceled',
+            'expired': 'expired',
+        }
+        return self.safe_string(statuses, status, status)
+
     def parse_order(self, order, market=None):
         description = order['descr']
         side = description['type']
@@ -746,13 +756,14 @@ class kraken (Exchange):
                     fee['currency'] = market['quote']
                 elif flags.find('fcib') >= 0:
                     fee['currency'] = market['base']
+        status = self.parse_order_status(self.safe_string(order, 'status'))
         return {
             'id': order['id'],
             'info': order,
             'timestamp': timestamp,
             'datetime': self.iso8601(timestamp),
             'lastTradeTimestamp': None,
-            'status': order['status'],
+            'status': status,
             'symbol': symbol,
             'type': type,
             'side': side,
@@ -1092,7 +1103,9 @@ class kraken (Exchange):
     def nonce(self):
         return self.milliseconds()
 
-    def handle_errors(self, code, reason, url, method, headers, body, response=None):
+    def handle_errors(self, code, reason, url, method, headers, body, response):
+        if code == 520:
+            raise ExchangeNotAvailable(self.id + ' ' + str(code) + ' ' + reason)
         if body.find('Invalid order') >= 0:
             raise InvalidOrder(self.id + ' ' + body)
         if body.find('Invalid nonce') >= 0:
@@ -1104,7 +1117,6 @@ class kraken (Exchange):
         if body.find('Invalid arguments:volume') >= 0:
             raise InvalidOrder(self.id + ' ' + body)
         if body[0] == '{':
-            response = json.loads(body)
             if not isinstance(response, basestring):
                 if 'error' in response:
                     numErrors = len(response['error'])
@@ -1114,7 +1126,3 @@ class kraken (Exchange):
                             if response['error'][i] in self.exceptions:
                                 raise self.exceptions[response['error'][i]](message)
                         raise ExchangeError(message)
-
-    async def request(self, path, api='public', method='GET', params={}, headers=None, body=None):
-        response = await self.fetch2(path, api, method, params, headers, body)
-        return self.parse_if_json_encoded_object(response)

@@ -12,9 +12,9 @@ try:
 except NameError:
     basestring = str  # Python 2
 import hashlib
-import json
 from ccxt.base.errors import ExchangeError
 from ccxt.base.errors import AuthenticationError
+from ccxt.base.errors import ArgumentsRequired
 from ccxt.base.errors import InsufficientFunds
 from ccxt.base.errors import InvalidOrder
 from ccxt.base.errors import OrderNotFound
@@ -126,16 +126,7 @@ class exmo (Exchange):
         })
 
     def fetch_trading_fees(self, params={}):
-        response = None
-        oldParseJsonResponse = self.parseJsonResponse
-        try:
-            self.parseJsonResponse = False
-            response = self.webGetEnDocsFees(params)
-            self.parseJsonResponse = oldParseJsonResponse
-        except Exception as e:
-            # ensure parseJsonResponse is restored no matter what
-            self.parseJsonResponse = oldParseJsonResponse
-            raise e
+        response = self.webGetEnDocsFees(params)
         parts = response.split('<td class="th_fees_2" colspan="2">')
         numParts = len(parts)
         if numParts != 2:
@@ -258,6 +249,12 @@ class exmo (Exchange):
             if depositFee is not None:
                 if len(depositFee) > 0:
                     deposit[code] = self.parse_fixed_float_value(depositFee)
+        # sets fiat fees to None
+        fiatGroups = self.to_array(self.omit(groupsByGroup, 'crypto'))
+        for i in range(0, len(fiatGroups)):
+            code = self.common_currency_code(self.safe_string(fiatGroups[i], 'title'))
+            withdraw[code] = None
+            deposit[code] = None
         result = {
             'info': response,
             'withdraw': withdraw,
@@ -324,7 +321,7 @@ class exmo (Exchange):
                         'max': self.safe_float(maxCosts, code),
                     },
                 },
-                'info': fee,
+                'info': id,
             }
         return result
 
@@ -518,12 +515,18 @@ class exmo (Exchange):
         return self.parse_trades(response[market['id']], market, since, limit)
 
     def fetch_my_trades(self, symbol=None, since=None, limit=None, params={}):
+        # their docs does not mention it, but if you don't supply a symbol
+        # their API will return an empty response as if you don't have any trades
+        # therefore we make it required here as calling it without a symbol is useless
+        if symbol is None:
+            raise ArgumentsRequired(self.id + ' fetchMyTrades() requires a symbol argument')
         self.load_markets()
-        request = {}
-        market = None
-        if symbol is not None:
-            market = self.market(symbol)
-            request['pair'] = market['id']
+        market = self.market(symbol)
+        request = {
+            'pair': market['id'],
+        }
+        if limit is not None:
+            request['limit'] = limit
         response = self.privatePostUserTrades(self.extend(request, params))
         if market is not None:
             response = response[market['id']]
@@ -591,9 +594,9 @@ class exmo (Exchange):
         market = None
         if symbol is not None:
             market = self.market(symbol)
-        response = self.privatePostOrderTrades({
+        response = self.privatePostOrderTrades(self.extend({
             'order_id': str(id),
-        })
+        }, params))
         return self.parse_trades(response, market, since, limit)
 
     def update_cached_orders(self, openOrders, symbol):
@@ -854,7 +857,14 @@ class exmo (Exchange):
         if not self.fees['funding']['percentage']:
             key = 'withdraw' if (type == 'withdrawal') else 'deposit'
             feeCost = self.safe_float(self.options['fundingFees'][key], code)
+            # users don't pay for cashbacks, no fees for that
+            provider = self.safe_string(transaction, 'provider')
+            if provider == 'cashback':
+                feeCost = 0
             if feeCost is not None:
+                # withdrawal amount includes the fee
+                if type == 'withdrawal':
+                    amount = amount - feeCost
                 fee = {
                     'cost': feeCost,
                     'currency': code,
@@ -939,13 +949,10 @@ class exmo (Exchange):
     def nonce(self):
         return self.milliseconds()
 
-    def handle_errors(self, httpCode, reason, url, method, headers, body, response=None):
-        if not isinstance(body, basestring):
-            return  # fallback to default error handler
-        if len(body) < 2:
+    def handle_errors(self, httpCode, reason, url, method, headers, body, response):
+        if response is None:
             return  # fallback to default error handler
         if (body[0] == '{') or (body[0] == '['):
-            response = json.loads(body)
             if 'result' in response:
                 #
                 #     {"result":false,"error":"Error 50052: Insufficient funds"}

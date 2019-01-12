@@ -121,53 +121,6 @@ class bleutrade (bittrex):
             },
         })
 
-    async def fetch_markets(self, params={}):
-        markets = await self.publicGetMarkets()
-        result = []
-        for p in range(0, len(markets['result'])):
-            market = markets['result'][p]
-            id = market['MarketName']
-            baseId = market['MarketCurrency']
-            quoteId = market['BaseCurrency']
-            base = self.common_currency_code(baseId)
-            quote = self.common_currency_code(quoteId)
-            symbol = base + '/' + quote
-            precision = {
-                'amount': 8,
-                'price': 8,
-            }
-            active = self.safe_string(market, 'IsActive')
-            if active == 'true':
-                active = True
-            elif active == 'false':
-                active = False
-            result.append({
-                'id': id,
-                'symbol': symbol,
-                'base': base,
-                'quote': quote,
-                'baseId': baseId,
-                'quoteId': quoteId,
-                'active': active,
-                'info': market,
-                'precision': precision,
-                'limits': {
-                    'amount': {
-                        'min': market['MinTradeSize'],
-                        'max': None,
-                    },
-                    'price': {
-                        'min': None,
-                        'max': None,
-                    },
-                    'cost': {
-                        'min': 0,
-                        'max': None,
-                    },
-                },
-            })
-        return result
-
     def parse_order_status(self, status):
         statuses = {
             'OK': 'closed',
@@ -249,6 +202,37 @@ class bleutrade (bittrex):
 
     async def fetch_withdrawals(self, code=None, since=None, limit=None, params={}):
         return await self.fetch_transactions_by_type('withdrawal', code, since, limit, params)
+
+    def parse_trade(self, trade, market=None):
+        timestamp = self.parse8601(trade['TimeStamp'] + '+00:00')
+        side = None
+        if trade['OrderType'] == 'BUY':
+            side = 'buy'
+        elif trade['OrderType'] == 'SELL':
+            side = 'sell'
+        id = self.safe_string(trade, 'TradeID')
+        symbol = None
+        if market is not None:
+            symbol = market['symbol']
+        cost = None
+        price = self.safe_float(trade, 'Price')
+        amount = self.safe_float(trade, 'Quantity')
+        if amount is not None:
+            if price is not None:
+                cost = price * amount
+        return {
+            'id': id,
+            'info': trade,
+            'timestamp': timestamp,
+            'datetime': self.iso8601(timestamp),
+            'symbol': symbol,
+            'type': 'limit',
+            'side': side,
+            'price': price,
+            'amount': amount,
+            'cost': cost,
+            'fee': None,
+        }
 
     def parse_transaction(self, transaction, currency=None):
         #

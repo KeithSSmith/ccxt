@@ -105,6 +105,7 @@ class bitfinex2 (bitfinex):
                         'auth/r/orders/{symbol}/new',
                         'auth/r/orders/{symbol}/hist',
                         'auth/r/order/{symbol}:{id}/trades',
+                        'auth/r/trades/hist',
                         'auth/r/trades/{symbol}/hist',
                         'auth/r/positions',
                         'auth/r/funding/offers/{symbol}',
@@ -116,6 +117,7 @@ class bitfinex2 (bitfinex):
                         'auth/r/funding/trades/{symbol}/hist',
                         'auth/r/info/margin/{key}',
                         'auth/r/info/funding/{key}',
+                        'auth/r/movements/hist',
                         'auth/r/movements/{currency}/hist',
                         'auth/r/stats/perf:{timeframe}/hist',
                         'auth/r/alerts',
@@ -336,7 +338,7 @@ class bitfinex2 (bitfinex):
 
     def fetch_ticker(self, symbol, params={}):
         self.load_markets()
-        market = self.markets[symbol]
+        market = self.market(symbol)
         ticker = self.publicGetTickerSymbol(self.extend({
             'symbol': market['id'],
         }, params))
